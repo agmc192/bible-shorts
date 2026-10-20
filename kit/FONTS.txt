@@ -1,0 +1,3 @@
+Fonts are not stored here. Reinstall into kit/psalm1/fonts with npm:
+  npm pack @fontsource/lora@5.3.0 @fontsource/frank-ruhl-libre@5.3.0 @fontsource/nunito@5.3.0 @fontsource/noto-serif@5.3.0
+then extract each .tgz into fonts/<name>/ (package/ contents). DejaVuSans comes from the system.
