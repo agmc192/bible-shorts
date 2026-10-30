@@ -7,7 +7,7 @@ def load(n):
     sys.path.insert(0, "/home/claude/psalm1")
     g = {"__name__": "sfxlib_ep"}
     lib = open("/home/claude/psalm1/sfx.py").read().split("# ---------------------------------------------------------------- the cue sheet")[0]
-    lib = lib.replace("DUR = 50.0", f"DUR = __import__('json').load(open('/home/claude/psalm{n}/vomap.json'))['video_dur']")
+    lib = lib.replace("DUR = 50.0", f"DUR = __import__('json').load(open(__import__('os').environ.get('VOMAP', '/home/claude/psalm{n}/vomap.json')))['video_dur']")
     lib = lib.replace("import render_v2 as V\n", "")
     exec(lib, g)
     p2 = open("/home/claude/psalm2/sfx_p2.py").read()
@@ -16,6 +16,14 @@ def load(n):
     exec(p6[p6.index("def drip"):p6.index("\npl = place")], g)
 
     def write(path):
+        import os
+        vm = json.load(open(os.environ.get("VOMAP", f"/home/claude/psalm{n}/vomap.json")))
+        co = vm.get("callout")
+        if co:
+            for k, tl in enumerate(co["lights"]):
+                g["place"](g["ping"](), tl - 0.01, 0.16, (-0.35, 0.0, 0.35)[k])
+                g["place"](g["hit"](70, 30, 0.25), tl - 0.01, 0.12)
+            path = path.replace(".wav", f"_{co['plat']}.wav")
         L, Rt, SR = g["L"], g["Rt"], g["SR"]
         mix = np.stack([L, Rt], axis=1)
         fade = int(SR * 0.4)

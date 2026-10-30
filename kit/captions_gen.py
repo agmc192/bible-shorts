@@ -1,15 +1,17 @@
 import sys, json, os, re
-N = int(sys.argv[1]); HLX = set(sys.argv[2].split(",")); SUBS = json.loads(sys.argv[3]) if len(sys.argv) > 3 else {}
+N = sys.argv[1]; HLX = set(sys.argv[2].split(",")); SUBS = json.loads(sys.argv[3]) if len(sys.argv) > 3 else {}
 sys.path.insert(0, "/home/claude/psalm1")
 from PIL import Image, ImageDraw
 import render as R
-M = json.load(open(f"/home/claude/psalm{N}/vomap.json"))
+M = json.load(open(os.environ.get("VOMAP", f"/home/claude/psalm{N}/vomap.json")))
+CAPS = "caps_" + M["callout"]["plat"] if M.get("callout") else "caps"
 HL = {"cried", "noticed", "david", "raw", "groaning", "night", "floods", "tears", "bones", "soul", "shaken", "enemies", "end", "turns", "lord", "heard", "weeping", "accepts", "prayer", "changed", "hebrew", "ahdmahtie", "admatay", "until", "when", "finish", "sentence", "god", "hears", "tonight", "half"}
-os.makedirs(f"/home/claude/psalm{N}/caps", exist_ok=True)
+os.makedirs(f"/home/claude/psalm{N}/{CAPS}", exist_ok=True)
 HL = HLX
 chunks = []
 for a, b, ph in M["phrases"]:
     ws = [w for w in M["words"] if a - 0.001 <= w[0] < b - 0.001]
+    if not ws: continue
     groups, cur = [], []
     for w in ws:
         cur.append(w)
@@ -47,10 +49,10 @@ def png(words, path):
     im.save(path); return im.size
 inputs, filt, prev = [], [], "[0:v]"
 for i, (s, e, g) in enumerate(chunks):
-    p = f"/home/claude/psalm{N}/caps/c{i:03d}.png"; w, h = png(g, p)
+    p = f"/home/claude/psalm{N}/{CAPS}/c{i:03d}.png"; w, h = png(g, p)
     inputs += ["-i", p]; out = f"[v{i}]"
     filt.append(f"{prev}[{i+1}:v]overlay=x=(W-{w})/2:y=1560-{h}/2:enable='between(t,{s:.3f},{e:.3f})'{out}"); prev = out
-open(f"/home/claude/psalm{N}/caps/filter.txt", "w").write(";".join(filt))
-json.dump({"inputs": inputs, "last": prev}, open(f"/home/claude/psalm{N}/caps/meta.json", "w"))
+open(f"/home/claude/psalm{N}/{CAPS}/filter.txt", "w").write(";".join(filt))
+json.dump({"inputs": inputs, "last": prev}, open(f"/home/claude/psalm{N}/{CAPS}/meta.json", "w"))
 for s, e, g in chunks[:8]: print(f"{s:6.2f}-{e:6.2f} {' '.join(g)}")
 print(len(chunks), "chunks")
